@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: servicesync-postgres
+    environment:
+      POSTGRES_DB: servicesync
+      POSTGRES_USER: servicesync
+      POSTGRES_PASSWORD: servicesync123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - servicesync-network
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: servicesync-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - servicesync-network
+    restart: unless-stopped
+
+  # Spring Boot Application (when ready)
+  servicesync-api:
+    build: .
+    container_name: servicesync-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: servicesync
+      DB_USERNAME: servicesync
+      DB_PASSWORD: servicesync123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - servicesync-network
+    restart: unless-stopped
+    # Uncomment when you have the JAR file
+    # volumes:
+    #   - ./target/servicesync-api-1.0.0-SNAPSHOT.jar:/app/app.jar
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  servicesync-network:
+    driver: bridge
