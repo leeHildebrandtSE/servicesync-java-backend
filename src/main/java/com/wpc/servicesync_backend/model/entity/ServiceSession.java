@@ -116,7 +116,7 @@ public class ServiceSession {
         return 0L;
     }
 
-    public long getNurseResponseTime() {
+    public LocalDateTime getNurseResponseTime() {
         if (nurseAlertTime != null && nurseResponseTime != null) {
             return ChronoUnit.MILLIS.between(nurseAlertTime, nurseResponseTime);
         }

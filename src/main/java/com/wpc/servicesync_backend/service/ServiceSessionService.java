@@ -288,7 +288,6 @@ public class ServiceSessionService {
                 .serviceCompleteTime(session.getServiceCompleteTime())
                 // Fixed: Convert milliseconds to seconds properly
                 .travelTimeSeconds(session.getTravelTime() / 1000)
-                .nurseResponseTimeSeconds(session.getNurseResponseTime() / 1000)
                 .servingTimeSeconds(session.getServingTime() / 1000)
                 .totalDurationSeconds(session.getElapsedTime() / 1000)
                 .comments(session.getComments())
