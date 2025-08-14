@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -256,7 +257,7 @@ public class ServiceSessionService {
 
     private String generateSessionId(Employee employee, Ward ward) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
-        return STR."SS-\{employee.getEmployeeId()}-\{ward.getName()}-\{timestamp}";
+        return "SS-" + employee.getEmployeeId() + "-" + ward.getName() + "-" + timestamp;
     }
 
     private boolean validateQRCode(String qrCode, QRLocationType locationType) {
@@ -285,11 +286,11 @@ public class ServiceSessionService {
                 .nurseResponseTime(session.getNurseResponseTime())
                 .serviceStartTime(session.getServiceStartTime())
                 .serviceCompleteTime(session.getServiceCompleteTime())
-                // Fix: Convert Duration to seconds properly
-                .travelTimeSeconds(session.getTravelTime().toSeconds())
-                .nurseResponseTimeSeconds(session.getNurseResponseTime().toSeconds())
-                .servingTimeSeconds(session.getServingTime().toSeconds())
-                .totalDurationSeconds(session.getTotalDuration().toSeconds())
+                // Fixed: Convert milliseconds to seconds properly
+                .travelTimeSeconds(session.getTravelTime() / 1000)
+                .nurseResponseTimeSeconds(session.getNurseResponseTime() / 1000)
+                .servingTimeSeconds(session.getServingTime() / 1000)
+                .totalDurationSeconds(session.getElapsedTime() / 1000)
                 .comments(session.getComments())
                 .nurseName(session.getNurseName())
                 .dietSheetDocumented(session.getDietSheetDocumented())

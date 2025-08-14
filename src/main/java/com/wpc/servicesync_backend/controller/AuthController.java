@@ -1,7 +1,7 @@
 // File: src/main/java/com/wpc/servicesync_backend/controller/AuthController.java
 package com.wpc.servicesync_backend.controller;
 
-import com.wpc.servicesync_backend.model.dto.ApiResponse;
+import com.wpc.servicesync_backend.dto.ApiResponse; // Fixed: Use the correct ApiResponse import
 import com.wpc.servicesync_backend.model.dto.AuthenticationRequest;
 import com.wpc.servicesync_backend.model.dto.AuthenticationResponse;
 import com.wpc.servicesync_backend.service.AuthenticationService;
@@ -35,7 +35,7 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Authentication failed for employee: {}", request.getEmployeeId(), e);
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Authentication failed", e.getMessage()));
+                    .body(ApiResponse.error("Authentication failed: " + e.getMessage()));
         }
     }
 
@@ -51,7 +51,7 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Token refresh failed", e);
             return ResponseEntity.badRequest()
-                    .body(ApiResponse.error("Token refresh failed", e.getMessage()));
+                    .body(ApiResponse.error("Token refresh failed: " + e.getMessage()));
         }
     }
 

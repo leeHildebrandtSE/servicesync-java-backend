@@ -139,8 +139,8 @@ class ServiceSessionControllerTest {
         // When & Then
         mockMvc.perform(post("/api/sessions/{sessionId}/complete", sessionId)
                         .with(csrf()))
-                .andExpected(status().isOk())
-                .andExpected(jsonPath("$.data.status").value("COMPLETED"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"));
     }
 
     @Test
@@ -156,6 +156,6 @@ class ServiceSessionControllerTest {
         mockMvc.perform(post("/api/sessions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpected(status().isUnauthorized());
+                .andExpect(status().isUnauthorized());
     }
 }

@@ -1,4 +1,3 @@
-// src/main/java/com/wpc/servicesync_backend/model/entity/ServiceSession.java
 package com.wpc.servicesync_backend.model.entity;
 
 import jakarta.persistence.*;
@@ -23,7 +22,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@Builder(toBuilder = true)
 public class ServiceSession {
 
     @Id
@@ -168,10 +167,12 @@ public class ServiceSession {
         double completionRate = getCompletionRate();
         double servingRate = getAverageServingRate();
 
-        return switch ((int) completionRate / 25) {
-            case 4 when servingRate >= 0.8 -> "Excellent";
-            case 3, 4 when servingRate >= 0.6 -> "Good";
-            case 2, 3 when servingRate >= 0.4 -> "Acceptable";
+        // Fixed: Removed guard condition that's not allowed
+        int ratingLevel = (int) completionRate / 25;
+        return switch (ratingLevel) {
+            case 4 -> servingRate >= 0.8 ? "Excellent" : "Good";
+            case 3 -> servingRate >= 0.6 ? "Good" : "Acceptable";
+            case 2 -> servingRate >= 0.4 ? "Acceptable" : "Below Average";
             default -> "Below Average";
         };
     }

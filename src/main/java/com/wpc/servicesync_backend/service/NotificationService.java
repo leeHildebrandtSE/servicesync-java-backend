@@ -1,4 +1,3 @@
-// src/main/java/com/wpc/servicesync_backend/service/NotificationService.java
 package com.wpc.servicesync_backend.service;
 
 import com.wpc.servicesync_backend.dto.ServiceSessionResponse;
@@ -135,7 +134,7 @@ public class NotificationService {
                     "type", "SESSION_COMPLETED",
                     "sessionId", session.getSessionId(),
                     "completionRate", session.getCompletionRate(),
-                    "totalDuration", session.getElapsedTime(),
+                    "totalDuration", session.getElapsedTime() / 1000, // Convert to seconds
                     "efficiencyRating", session.getEfficiencyRating(),
                     "mealsServed", session.getMealsServed(),
                     "mealCount", session.getMealCount(),
@@ -180,6 +179,7 @@ public class NotificationService {
                 .nurseResponseTime(session.getNurseResponseTime())
                 .serviceStartTime(session.getServiceStartTime())
                 .serviceCompleteTime(session.getServiceCompleteTime())
+                // Fixed: Convert milliseconds to seconds
                 .travelTimeSeconds(session.getTravelTime() / 1000)
                 .nurseResponseTimeSeconds(session.getNurseResponseTime() / 1000)
                 .servingTimeSeconds(session.getServingTime() / 1000)

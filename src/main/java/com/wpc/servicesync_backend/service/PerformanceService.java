@@ -122,15 +122,15 @@ public class PerformanceService {
         String efficiencyRating = calculateOverallEfficiency(averageCompletionRate, averageServingRate);
 
         List<SessionSummaryDto> topPerforming = sessions.stream()
-                .filter(s -> s.getCompletionRate() >= 95.0 && s.getAverageServingRate() >= 0.8f)
-                .sorted((a, b) -> Float.compare(b.getAverageServingRate(), a.getAverageServingRate()))
+                .filter(s -> s.getCompletionRate() >= 95.0 && s.getAverageServingRate() >= 0.8)
+                .sorted((a, b) -> Double.compare(b.getAverageServingRate(), a.getAverageServingRate())) // Fixed: Use Double.compare
                 .limit(5)
                 .map(this::convertToSummaryDto)
                 .collect(Collectors.toList());
 
         List<SessionSummaryDto> problematic = sessions.stream()
                 .filter(s -> s.getCompletionRate() < 75.0 || s.getTravelTime() > 900000 || s.getNurseResponseTime() > 300000)
-                .sorted((a, b) -> Float.compare(a.getCompletionRate(), b.getCompletionRate()))
+                .sorted((a, b) -> Double.compare(a.getCompletionRate(), b.getCompletionRate())) // Fixed: Use Double.compare
                 .limit(5)
                 .map(this::convertToSummaryDto)
                 .collect(Collectors.toList());
@@ -170,7 +170,7 @@ public class PerformanceService {
                 .wardName(session.getWard().getName())
                 .mealType(session.getMealType())
                 .mealCount(session.getMealCount())
-                .completionRate((double) session.getCompletionRate())
+                .completionRate(session.getCompletionRate()) // Fixed: Removed unnecessary cast
                 .totalDurationMinutes(session.getElapsedTime() / 60000)
                 .efficiencyRating(session.getEfficiencyRating())
                 .createdAt(session.getCreatedAt())
