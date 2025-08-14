@@ -1,16 +1,16 @@
-// src/main/java/com/wpc/servicesync_backend/controller/AuthController.java
+// File: src/main/java/com/wpc/servicesync_backend/controller/AuthController.java
 package com.wpc.servicesync_backend.controller;
 
-import com.wpc.servicesync_backend.dto.ApiResponse;
-import com.wpc.servicesync_backend.dto.EmployeeLoginRequest;
-import com.wpc.servicesync_backend.dto.EmployeeResponse;
-import com.wpc.servicesync_backend.service.EmployeeService;
+import com.wpc.servicesync_backend.model.dto.ApiResponse;
+import com.wpc.servicesync_backend.model.dto.AuthenticationRequest;
+import com.wpc.servicesync_backend.model.dto.AuthenticationResponse;
+import com.wpc.servicesync_backend.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,28 +22,43 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    private final EmployeeService employeeService;
+    private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
     @Operation(summary = "Employee login", description = "Authenticate employee with ID and password")
-    public ResponseEntity<ApiResponse<EmployeeResponse>> login(@Valid @RequestBody EmployeeLoginRequest request) {
-        log.info("Login attempt for employee ID: {}", request.getEmployeeId());
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> authenticate(@Valid @RequestBody AuthenticationRequest request) {
+        log.info("Authentication attempt for employee ID: {}", request.getEmployeeId());
 
-        return employeeService.authenticate(request)
-                .map(employee -> ResponseEntity.ok(
-                        ApiResponse.success("Login successful", employee)))
-                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(ApiResponse.error("Invalid credentials")));
+        try {
+            AuthenticationResponse response = authenticationService.authenticate(request);
+            return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+        } catch (Exception e) {
+            log.error("Authentication failed for employee: {}", request.getEmployeeId(), e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Authentication failed", e.getMessage()));
+        }
     }
 
-    @GetMapping("/employee/{employeeId}")
-    @Operation(summary = "Get employee by ID", description = "Retrieve employee information by employee ID")
-    public ResponseEntity<ApiResponse<EmployeeResponse>> getEmployee(@PathVariable String employeeId) {
-        log.info("Fetching employee with ID: {}", employeeId);
+    @PostMapping("/refresh")
+    @Operation(summary = "Refresh token", description = "Get new access token using refresh token")
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> refreshToken(
+            @Parameter(description = "Refresh token") @RequestBody String refreshToken) {
+        log.info("Token refresh attempt");
 
-        return employeeService.findByEmployeeId(employeeId)
-                .map(employee -> ResponseEntity.ok(
-                        ApiResponse.success(employee)))
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            AuthenticationResponse response = authenticationService.refreshToken(refreshToken);
+            return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", response));
+        } catch (Exception e) {
+            log.error("Token refresh failed", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Token refresh failed", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout", description = "Logout employee (client-side token removal)")
+    public ResponseEntity<ApiResponse<String>> logout() {
+        log.info("Logout request");
+        return ResponseEntity.ok(ApiResponse.success("Logged out successfully", "Token should be removed from client"));
     }
 }
