@@ -116,7 +116,15 @@ public class ServiceSession {
         return 0L;
     }
 
-    public LocalDateTime getNurseResponseTime() {
+    public long getNurseResponseTime() {
+        if (nurseAlertTime != null && nurseResponseTime != null) {
+            return ChronoUnit.MILLIS.between(nurseAlertTime, nurseResponseTime);
+        }
+        return 0L;
+    }
+
+    // Duration in millis
+    public long getNurseResponseDuration() {
         if (nurseAlertTime != null && nurseResponseTime != null) {
             return ChronoUnit.MILLIS.between(nurseAlertTime, nurseResponseTime);
         }

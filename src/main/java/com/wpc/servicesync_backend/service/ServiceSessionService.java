@@ -283,11 +283,11 @@ public class ServiceSessionService {
                 .kitchenExitTime(session.getKitchenExitTime())
                 .wardArrivalTime(session.getWardArrivalTime())
                 .nurseAlertTime(session.getNurseAlertTime())
-                .nurseResponseTime(session.getNurseResponseTime())
                 .serviceStartTime(session.getServiceStartTime())
                 .serviceCompleteTime(session.getServiceCompleteTime())
                 // Fixed: Convert milliseconds to seconds properly
                 .travelTimeSeconds(session.getTravelTime() / 1000)
+                .nurseResponseTimeSeconds(session.getNurseResponseDuration() / 1000) // duration in seconds
                 .servingTimeSeconds(session.getServingTime() / 1000)
                 .totalDurationSeconds(session.getElapsedTime() / 1000)
                 .comments(session.getComments())
@@ -312,7 +312,6 @@ public class ServiceSessionService {
                 .kitchenExitTime(session.getKitchenExitTime())
                 .wardArrivalTime(session.getWardArrivalTime())
                 .nurseAlertTime(session.getNurseAlertTime())
-                .nurseResponseTime(session.getNurseResponseTime())
                 .serviceStartTime(session.getServiceStartTime())
                 .serviceCompleteTime(session.getServiceCompleteTime())
                 .comments(session.getComments())

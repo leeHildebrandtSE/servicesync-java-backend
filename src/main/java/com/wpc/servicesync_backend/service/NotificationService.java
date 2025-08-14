@@ -176,7 +176,6 @@ public class NotificationService {
                 .kitchenExitTime(session.getKitchenExitTime())
                 .wardArrivalTime(session.getWardArrivalTime())
                 .nurseAlertTime(session.getNurseAlertTime())
-                .nurseResponseTime(session.getNurseResponseTime())
                 .serviceStartTime(session.getServiceStartTime())
                 .serviceCompleteTime(session.getServiceCompleteTime())
                 // Fixed: Convert milliseconds to seconds
