@@ -1,3 +1,4 @@
+# Build artifacts
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -31,3 +32,81 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### ServiceSync Backend Additions ###
+
+# Application logs
+logs/
+*.log
+*.log.*
+
+# Upload directories
+uploads/
+temp/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Docker volumes (if using local bind mounts)
+data/
+postgres-data/
+redis-data/
+
+# Spring Boot specific
+spring.log
+application-*.properties
+application-*.yml
+!application.yml
+!application.properties
+
+# Security files
+*.p12
+*.jks
+*.keystore
+*.pem
+*.key
+*.crt
+
+# Test reports
+test-results/
+coverage/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# IDE specific folders
+*.sublime-*
+.vscode/settings.json
+.vscode/launch.json
+
+# Docker specific (optional - uncomment if needed)
+# docker-compose.override.yml
+# .dockerignore
+
+# Database files (if using embedded databases for testing)
+*.db
+*.sqlite
+*.h2.db
+
+# Maven/Gradle wrapper (keep the scripts but ignore properties)
+.mvn/wrapper/maven-wrapper.properties
+gradle/wrapper/gradle-wrapper.properties
+
+# Application specific
+application-secrets.yml
