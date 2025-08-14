@@ -5,9 +5,12 @@ import com.wpc.servicesync_backend.model.entity.SessionStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class SessionUpdateRequest {
+    private UUID sessionId;
+    private String dietSheetPhotoPath;
     private SessionStatus status;
     private LocalDateTime kitchenExitTime;
     private LocalDateTime wardArrivalTime;

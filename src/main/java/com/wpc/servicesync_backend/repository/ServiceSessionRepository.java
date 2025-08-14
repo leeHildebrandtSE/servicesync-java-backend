@@ -79,4 +79,10 @@ public interface ServiceSessionRepository extends JpaRepository<ServiceSession, 
 
     @Query("SELECT s.employee.name, COUNT(s) FROM ServiceSession s WHERE s.createdAt >= :since GROUP BY s.employee.name ORDER BY COUNT(s) DESC")
     List<Object[]> getEmployeeActivityStatisticsSince(@Param("since") LocalDateTime since);
+
+    @Query("SELECT s FROM ServiceSession s WHERE s.createdAt BETWEEN :start AND :end AND s.status = 'COMPLETED' ORDER BY s.createdAt DESC")
+    List<ServiceSession> findCompletedSessionsBetween(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT s FROM ServiceSession s WHERE s.status = 'ACTIVE' AND s.createdAt < :cutoff")
+    List<ServiceSession> findStaleActiveSessions(@Param("cutoff") LocalDateTime cutoff);
 }

@@ -1,9 +1,9 @@
-// src/main/java/com/wpc/servicesync_backend/service/ServiceSessionService.java
 package com.wpc.servicesync_backend.service;
 
 import com.wpc.servicesync_backend.dto.QRScanRequest;
 import com.wpc.servicesync_backend.dto.ServiceSessionRequest;
 import com.wpc.servicesync_backend.dto.ServiceSessionResponse;
+import com.wpc.servicesync_backend.model.dto.ServiceSessionDto;
 import com.wpc.servicesync_backend.model.dto.SessionUpdateRequest;
 import com.wpc.servicesync_backend.model.entity.Employee;
 import com.wpc.servicesync_backend.model.entity.QRLocationType;
@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -216,6 +218,42 @@ public class ServiceSessionService {
                 .toList();
     }
 
+    // Additional methods for cleanup and advanced features
+    @Scheduled(fixedRate = 3600000) // Run every hour
+    public void cleanupStaleSessions() {
+        log.info("Starting cleanup of stale sessions");
+
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(24);
+        List<ServiceSession> staleSessions = sessionRepository.findStaleActiveSessions(cutoff);
+
+        if (!staleSessions.isEmpty()) {
+            staleSessions.forEach(session -> {
+                session.setStatus(SessionStatus.CANCELLED);
+                String existingComments = session.getComments() != null ? session.getComments() : "";
+                session.setComments(existingComments + " [Auto-cancelled due to inactivity]");
+            });
+
+            sessionRepository.saveAll(staleSessions);
+            log.info("Cancelled {} stale sessions", staleSessions.size());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServiceSessionDto> getSessionsByWard(UUID wardId) {
+        return sessionRepository.findByWardIdAndStatus(wardId, SessionStatus.ACTIVE)
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ServiceSessionDto> getCompletedSessionsBetween(LocalDateTime start, LocalDateTime end) {
+        return sessionRepository.findCompletedSessionsBetween(start, end)
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     private String generateSessionId(Employee employee, Ward ward) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"));
         return STR."SS-\{employee.getEmployeeId()}-\{ward.getName()}-\{timestamp}";
@@ -247,6 +285,7 @@ public class ServiceSessionService {
                 .nurseResponseTime(session.getNurseResponseTime())
                 .serviceStartTime(session.getServiceStartTime())
                 .serviceCompleteTime(session.getServiceCompleteTime())
+                // Fix: Convert Duration to seconds properly
                 .travelTimeSeconds(session.getTravelTime().toSeconds())
                 .nurseResponseTimeSeconds(session.getNurseResponseTime().toSeconds())
                 .servingTimeSeconds(session.getServingTime().toSeconds())
@@ -257,6 +296,33 @@ public class ServiceSessionService {
                 .dietSheetNotes(session.getDietSheetNotes())
                 .createdAt(session.getCreatedAt())
                 .updatedAt(session.getUpdatedAt())
+                .build();
+    }
+
+    public ServiceSessionDto convertToDto(ServiceSession session) {
+        return ServiceSessionDto.builder()
+                .id(session.getId())
+                .sessionId(session.getSessionId())
+                .employeeName(session.getEmployee().getName())
+                .wardName(session.getWard().getName())
+                .mealType(session.getMealType())
+                .mealCount(session.getMealCount())
+                .mealsServed(session.getMealsServed())
+                .status(session.getStatus())
+                .kitchenExitTime(session.getKitchenExitTime())
+                .wardArrivalTime(session.getWardArrivalTime())
+                .nurseAlertTime(session.getNurseAlertTime())
+                .nurseResponseTime(session.getNurseResponseTime())
+                .serviceStartTime(session.getServiceStartTime())
+                .serviceCompleteTime(session.getServiceCompleteTime())
+                .comments(session.getComments())
+                .nurseName(session.getNurseName())
+                .dietSheetDocumented(session.getDietSheetDocumented())
+                .dietSheetNotes(session.getDietSheetNotes())
+                .createdAt(session.getCreatedAt())
+                .completionRate((double) session.getCompletionRate())
+                .currentStep(session.getCurrentStep())
+                .summary(session.getSummary())
                 .build();
     }
 }
