@@ -1,4 +1,4 @@
-// Complete ServiceSession.java
+// src/main/java/com/wpc/servicesync_backend/model/entity/ServiceSession.java
 package com.wpc.servicesync_backend.model.entity;
 
 import jakarta.persistence.*;
@@ -9,7 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Entity
@@ -110,34 +110,34 @@ public class ServiceSession {
     private LocalDateTime updatedAt;
 
     // Business logic methods using Java 21 features
-    public Duration getTravelTime() {
+    public long getTravelTime() {
         if (kitchenExitTime != null && wardArrivalTime != null) {
-            return Duration.between(kitchenExitTime, wardArrivalTime);
+            return ChronoUnit.MILLIS.between(kitchenExitTime, wardArrivalTime);
         }
-        return Duration.ZERO;
+        return 0L;
     }
 
-    public Duration getNurseResponseTime() {
+    public long getNurseResponseTime() {
         if (nurseAlertTime != null && nurseResponseTime != null) {
-            return Duration.between(nurseAlertTime, nurseResponseTime);
+            return ChronoUnit.MILLIS.between(nurseAlertTime, nurseResponseTime);
         }
-        return Duration.ZERO;
+        return 0L;
     }
 
-    public Duration getServingTime() {
+    public long getServingTime() {
         if (serviceStartTime != null && serviceCompleteTime != null) {
-            return Duration.between(serviceStartTime, serviceCompleteTime);
+            return ChronoUnit.MILLIS.between(serviceStartTime, serviceCompleteTime);
         }
-        return Duration.ZERO;
+        return 0L;
     }
 
-    public Duration getTotalDuration() {
+    public long getElapsedTime() {
         if (kitchenExitTime != null && serviceCompleteTime != null) {
-            return Duration.between(kitchenExitTime, serviceCompleteTime);
+            return ChronoUnit.MILLIS.between(kitchenExitTime, serviceCompleteTime);
         } else if (kitchenExitTime != null) {
-            return Duration.between(kitchenExitTime, LocalDateTime.now());
+            return ChronoUnit.MILLIS.between(kitchenExitTime, LocalDateTime.now());
         }
-        return Duration.ZERO;
+        return 0L;
     }
 
     public double getCompletionRate() {
@@ -148,9 +148,9 @@ public class ServiceSession {
     }
 
     public double getAverageServingRate() {
-        Duration servingDuration = getServingTime();
-        if (!servingDuration.isZero() && mealsServed > 0) {
-            double minutes = servingDuration.toMinutes();
+        long servingMillis = getServingTime();
+        if (servingMillis > 0 && mealsServed > 0) {
+            double minutes = servingMillis / 60000.0;
             return mealsServed / minutes;
         }
         return 0.0;
@@ -194,24 +194,45 @@ public class ServiceSession {
     }
 
     public String getSummary() {
-        var duration = getTotalDuration();
-        var completionRate = getCompletionRate();
-        var docStatus = dietSheetDocumented ? "✓" : "✗";
+        long elapsedMillis = getElapsedTime();
+        double completionRate = getCompletionRate();
+        String docStatus = dietSheetDocumented ? "✓" : "✗";
 
-        return STR."Ward \{ward.getName()} • \{mealsServed}/\{mealCount} \{mealType.getDisplayName()} meals • \{String.format("%.1f", completionRate)}% complete • Duration: \{formatDuration(duration)} • Doc: \{docStatus}";
+        return String.format("Ward %s • %d/%d %s meals • %.1f%% complete • Duration: %s • Doc: %s",
+                ward != null ? ward.getName() : "Unknown",
+                mealsServed, mealCount,
+                mealType != null ? mealType.getDisplayName() : "Unknown",
+                completionRate,
+                formatDuration(elapsedMillis),
+                docStatus);
     }
 
-    private String formatDuration(Duration duration) {
-        long hours = duration.toHours();
-        long minutes = duration.toMinutesPart();
-        long seconds = duration.toSecondsPart();
+    private String formatDuration(long millis) {
+        long seconds = millis / 1000;
+        long hours = seconds / 3600;
+        long minutes = (seconds % 3600) / 60;
+        seconds = seconds % 60;
 
         if (hours > 0) {
-            return STR."\{hours}h \{minutes}m \{seconds}s";
+            return String.format("%dh %dm %ds", hours, minutes, seconds);
         } else if (minutes > 0) {
-            return STR."\{minutes}m \{seconds}s";
+            return String.format("%dm %ds", minutes, seconds);
         } else {
-            return STR."\{seconds}s";
+            return String.format("%ds", seconds);
         }
+    }
+
+    // Additional utility methods
+    public boolean hasWarnings() {
+        long travelTime = getTravelTime();
+        long nurseResponseTime = getNurseResponseTime();
+
+        return travelTime > 900000L || // > 15 minutes travel
+                nurseResponseTime > 300000L || // > 5 minutes nurse response
+                getCompletionRate() < 75.0; // < 75% completion rate
+    }
+
+    public boolean isDocumentationComplete() {
+        return dietSheetDocumented || (dietSheetPhotoPath != null && !dietSheetPhotoPath.trim().isEmpty());
     }
 }

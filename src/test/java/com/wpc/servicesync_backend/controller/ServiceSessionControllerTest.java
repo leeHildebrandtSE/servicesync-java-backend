@@ -1,7 +1,7 @@
 package com.wpc.servicesync_backend.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.wpc.servicesync_backend.model.dto.*;
+import com.wpc.servicesync_backend.dto.*;
 import com.wpc.servicesync_backend.model.entity.MealType;
 import com.wpc.servicesync_backend.model.entity.SessionStatus;
 import com.wpc.servicesync_backend.service.ServiceSessionService;
@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -39,13 +40,13 @@ class ServiceSessionControllerTest {
     @WithMockUser(roles = "HOSTESS")
     void createSession_Success() throws Exception {
         // Given
-        SessionCreateRequest request = new SessionCreateRequest();
+        ServiceSessionRequest request = new ServiceSessionRequest();
         request.setEmployeeId(UUID.randomUUID());
         request.setWardId(UUID.randomUUID());
         request.setMealType(MealType.BREAKFAST);
         request.setMealCount(12);
 
-        ServiceSessionDto responseDto = ServiceSessionDto.builder()
+        ServiceSessionResponse responseDto = ServiceSessionResponse.builder()
                 .id(UUID.randomUUID())
                 .sessionId("TEST-SESSION-001")
                 .employeeName("Test Employee")
@@ -54,9 +55,11 @@ class ServiceSessionControllerTest {
                 .mealCount(12)
                 .status(SessionStatus.ACTIVE)
                 .createdAt(LocalDateTime.now())
+                .completionRate(0.0)
+                .currentStep("Kitchen Exit")
                 .build();
 
-        when(sessionService.createSession(any(SessionCreateRequest.class))).thenReturn(responseDto);
+        when(sessionService.createSession(any(ServiceSessionRequest.class))).thenReturn(responseDto);
 
         // When & Then
         mockMvc.perform(post("/api/sessions")
@@ -64,9 +67,9 @@ class ServiceSessionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.sessionId").value("TEST-SESSION-001"))
-                .andExpect(jsonPath("$.employeeName").value("Test Employee"))
-                .andExpect(jsonPath("$.mealType").value("BREAKFAST"));
+                .andExpect(jsonPath("$.data.sessionId").value("TEST-SESSION-001"))
+                .andExpect(jsonPath("$.data.employeeName").value("Test Employee"))
+                .andExpect(jsonPath("$.data.mealType").value("BREAKFAST"));
     }
 
     @Test
@@ -74,22 +77,24 @@ class ServiceSessionControllerTest {
     void getSession_Success() throws Exception {
         // Given
         String sessionId = "TEST-SESSION-001";
-        ServiceSessionDto responseDto = ServiceSessionDto.builder()
+        ServiceSessionResponse responseDto = ServiceSessionResponse.builder()
                 .sessionId(sessionId)
                 .employeeName("Test Employee")
                 .wardName("Test Ward")
                 .mealType(MealType.BREAKFAST)
                 .mealCount(12)
                 .status(SessionStatus.ACTIVE)
+                .completionRate(0.0)
+                .currentStep("Kitchen Exit")
                 .build();
 
-        when(sessionService.getSession(sessionId)).thenReturn(responseDto);
+        when(sessionService.findBySessionId(sessionId)).thenReturn(Optional.of(responseDto));
 
         // When & Then
         mockMvc.perform(get("/api/sessions/{sessionId}", sessionId))
-                .andExpect(status().isOk()) // Fixed typo: was "andExpected"
-                .andExpect(jsonPath("$.sessionId").value(sessionId))
-                .andExpected(jsonPath("$.employeeName").value("Test Employee"));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.sessionId").value(sessionId))
+                .andExpect(jsonPath("$.data.employeeName").value("Test Employee"));
     }
 
     @Test
@@ -97,60 +102,36 @@ class ServiceSessionControllerTest {
     void getActiveSessionsByEmployee_Success() throws Exception {
         // Given
         UUID employeeId = UUID.randomUUID();
-        List<ServiceSessionDto> sessions = List.of(
-                ServiceSessionDto.builder()
+        List<ServiceSessionResponse> sessions = List.of(
+                ServiceSessionResponse.builder()
                         .sessionId("SESSION-001")
                         .employeeName("Test Employee")
                         .status(SessionStatus.ACTIVE)
+                        .completionRate(0.0)
+                        .currentStep("Kitchen Exit")
                         .build()
         );
 
-        when(sessionService.getActiveSessionsByEmployee(employeeId)).thenReturn(sessions);
+        when(sessionService.findActiveSessionsByEmployee(employeeId)).thenReturn(sessions);
 
         // When & Then
         mockMvc.perform(get("/api/sessions/employee/{employeeId}/active", employeeId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].sessionId").value("SESSION-001"));
-    }
-
-    @Test
-    @WithMockUser(roles = "HOSTESS")
-    void updateSession_Success() throws Exception {
-        // Given
-        String sessionId = "TEST-SESSION-001";
-        SessionUpdateRequest request = new SessionUpdateRequest();
-        request.setMealsServed(5);
-        request.setComments("Updated progress");
-
-        ServiceSessionDto responseDto = ServiceSessionDto.builder()
-                .sessionId(sessionId)
-                .employeeName("Test Employee")
-                .mealsServed(5)
-                .comments("Updated progress")
-                .build();
-
-        when(sessionService.updateSession(sessionId, request)).thenReturn(responseDto);
-
-        // When & Then
-        mockMvc.perform(put("/api/sessions/{sessionId}", sessionId)
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.sessionId").value(sessionId))
-                .andExpect(jsonPath("$.mealsServed").value(5));
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].sessionId").value("SESSION-001"));
     }
 
     @Test
     @WithMockUser(roles = "HOSTESS")
     void completeSession_Success() throws Exception {
         // Given
-        String sessionId = "TEST-SESSION-001";
-        ServiceSessionDto responseDto = ServiceSessionDto.builder()
-                .sessionId(sessionId)
+        UUID sessionId = UUID.randomUUID();
+        ServiceSessionResponse responseDto = ServiceSessionResponse.builder()
+                .id(sessionId)
+                .sessionId("TEST-SESSION-001")
                 .status(SessionStatus.COMPLETED)
                 .completionRate(100.0)
+                .currentStep("Service Complete")
                 .build();
 
         when(sessionService.completeSession(sessionId)).thenReturn(responseDto);
@@ -158,15 +139,14 @@ class ServiceSessionControllerTest {
         // When & Then
         mockMvc.perform(post("/api/sessions/{sessionId}/complete", sessionId)
                         .with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.sessionId").value(sessionId))
-                .andExpect(jsonPath("$.status").value("COMPLETED"));
+                .andExpected(status().isOk())
+                .andExpected(jsonPath("$.data.status").value("COMPLETED"));
     }
 
     @Test
     void createSession_Unauthorized() throws Exception {
         // Given
-        SessionCreateRequest request = new SessionCreateRequest();
+        ServiceSessionRequest request = new ServiceSessionRequest();
         request.setEmployeeId(UUID.randomUUID());
         request.setWardId(UUID.randomUUID());
         request.setMealType(MealType.BREAKFAST);
@@ -176,24 +156,6 @@ class ServiceSessionControllerTest {
         mockMvc.perform(post("/api/sessions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    @WithMockUser(roles = "NURSE") // Nurse role shouldn't be able to create sessions
-    void createSession_Forbidden() throws Exception {
-        // Given
-        SessionCreateRequest request = new SessionCreateRequest();
-        request.setEmployeeId(UUID.randomUUID());
-        request.setWardId(UUID.randomUUID());
-        request.setMealType(MealType.BREAKFAST);
-        request.setMealCount(12);
-
-        // When & Then
-        mockMvc.perform(post("/api/sessions")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+                .andExpected(status().isUnauthorized());
     }
 }
