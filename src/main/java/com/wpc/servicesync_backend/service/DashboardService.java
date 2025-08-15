@@ -4,6 +4,7 @@ package com.wpc.servicesync_backend.service;
 import com.wpc.servicesync_backend.dto.DashboardStatsResponse;
 import com.wpc.servicesync_backend.dto.SessionAwaitingResponse;
 import com.wpc.servicesync_backend.dto.SessionInProgressResponse;
+import com.wpc.servicesync_backend.model.entity.ServiceSession;
 import com.wpc.servicesync_backend.model.entity.SessionStatus;
 import com.wpc.servicesync_backend.repository.ServiceSessionRepository;
 import lombok.RequiredArgsConstructor;
@@ -80,8 +81,7 @@ public class DashboardService {
                 .build();
     }
 
-    private SessionInProgressResponse mapToInProgressResponse(
-            com.wpc.servicesync_backend.model.entity.ServiceSession session) {
+    private SessionInProgressResponse mapToInProgressResponse(ServiceSession session) {
         long elapsedMinutes = session.getKitchenExitTime() != null ?
                 ChronoUnit.MINUTES.between(session.getKitchenExitTime(), LocalDateTime.now()) : 0;
 
@@ -100,8 +100,7 @@ public class DashboardService {
                 .build();
     }
 
-    private SessionAwaitingResponse mapToAwaitingResponse(
-            com.wpc.servicesync_backend.model.entity.ServiceSession session) {
+    private SessionAwaitingResponse mapToAwaitingResponse(ServiceSession session) {
         long waitingMinutes = session.getNurseAlertTime() != null ?
                 ChronoUnit.MINUTES.between(session.getNurseAlertTime(), LocalDateTime.now()) : 0;
 
