@@ -57,6 +57,7 @@ secrets_*.txt
 generate-secrets.sh
 secrets_*.sh
 *_secrets.sh
+backups/
 
 # Docker volumes (if using local bind mounts)
 data/
