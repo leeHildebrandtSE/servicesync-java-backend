@@ -1,7 +1,7 @@
 // File: src/main/java/com/wpc/servicesync_backend/controller/AuthController.java
 package com.wpc.servicesync_backend.controller;
 
-import com.wpc.servicesync_backend.dto.ApiResponse; // Fixed: Use the correct ApiResponse import
+import com.wpc.servicesync_backend.dto.ApiResponse;
 import com.wpc.servicesync_backend.model.dto.AuthenticationRequest;
 import com.wpc.servicesync_backend.model.dto.AuthenticationResponse;
 import com.wpc.servicesync_backend.service.AuthenticationService;
