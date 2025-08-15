@@ -49,7 +49,11 @@ public class QRController {
             @Parameter(description = "QR type") @PathVariable String type,
             @Parameter(description = "Location ID") @RequestParam(required = false) String locationId) {
 
-        String qrContent = STR."\{type.toUpperCase()}_\{locationId != null ? locationId : UUID.randomUUID().toString().substring(0, 8)}|\{System.currentTimeMillis()}";
+        // Fixed: Replace Java 21 string template with standard String.format()
+        String qrContent = String.format("%s_%s|%d",
+                type.toUpperCase(),
+                locationId != null ? locationId : UUID.randomUUID().toString().substring(0, 8),
+                System.currentTimeMillis());
 
         Map<String, String> response = Map.of(
                 "type", type,
