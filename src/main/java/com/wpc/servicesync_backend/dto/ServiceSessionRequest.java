@@ -1,10 +1,10 @@
-// src/main/java/com/wpc/servicesync_backend/dto/ServiceSessionRequest.java
 package com.wpc.servicesync_backend.dto;
 
 import com.wpc.servicesync_backend.model.entity.MealType;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.UUID;
@@ -20,9 +20,11 @@ public class ServiceSessionRequest {
     @NotNull(message = "Meal type is required")
     private MealType mealType;
 
+    @NotNull(message = "Meal count is required")
     @Min(value = 1, message = "Meal count must be at least 1")
     @Max(value = 100, message = "Meal count cannot exceed 100")
     private Integer mealCount;
 
+    @Size(max = 500, message = "Comments cannot exceed 500 characters")
     private String comments;
 }
