@@ -1,15 +1,18 @@
-// src/main/java/com/wpc/servicesync_backend/dto/EmployeeResponse.java
 package com.wpc.servicesync_backend.dto;
 
 import com.wpc.servicesync_backend.model.entity.EmployeeRole;
-import lombok.Data;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EmployeeResponse {
     private UUID id;
     private String employeeId;

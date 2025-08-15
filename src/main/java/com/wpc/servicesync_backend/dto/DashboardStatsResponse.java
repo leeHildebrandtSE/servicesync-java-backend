@@ -1,14 +1,17 @@
-// src/main/java/com/wpc/servicesync_backend/dto/DashboardStatsResponse.java
 package com.wpc.servicesync_backend.dto;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class DashboardStatsResponse {
     private Integer activeSessions;
     private Integer completedSessionsToday;
