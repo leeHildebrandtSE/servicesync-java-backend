@@ -5,7 +5,6 @@ import com.wpc.servicesync_backend.dto.DashboardStatsResponse;
 import com.wpc.servicesync_backend.dto.SessionAwaitingResponse;
 import com.wpc.servicesync_backend.dto.SessionInProgressResponse;
 import com.wpc.servicesync_backend.model.entity.ServiceSession;
-import com.wpc.servicesync_backend.model.entity.SessionStatus;
 import com.wpc.servicesync_backend.repository.ServiceSessionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
