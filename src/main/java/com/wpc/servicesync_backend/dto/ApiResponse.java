@@ -73,7 +73,8 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(String message, String path) {
+    // Fixed: Removed duplicate method signature
+    public static <T> ApiResponse<T> errorWithPath(String message, String path) {
         return ApiResponse.<T>builder()
                 .success(false)
                 .message(message)
@@ -82,7 +83,7 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(String message, T data) {
+    public static <T> ApiResponse<T> errorWithData(String message, T data) {
         return ApiResponse.<T>builder()
                 .success(false)
                 .message(message)
