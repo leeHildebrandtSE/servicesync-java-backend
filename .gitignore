@@ -54,6 +54,9 @@ diet-sheets/
 secrets_*.env
 secrets_*.txt
 .secrets
+generate_secrets.sh
+secrets_*.sh
+*_secrets.sh
 
 # Docker volumes (if using local bind mounts)
 data/
