@@ -1,7 +1,22 @@
 package com.wpc.servicesync_backend.model.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -75,13 +90,13 @@ public class Employee {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    // Java 21 Pattern matching in business methods
+    // Fixed: Java 21 Pattern matching with standard string concatenation
     public String getDisplayName() {
         return switch (role) {
-            case HOSTESS -> STR."👩‍⚕️ \{name}";
-            case NURSE -> STR."👨‍⚕️ \{name}";
-            case SUPERVISOR -> STR."👔 \{name}";
-            case ADMIN -> STR."🛡️ \{name}";
+            case HOSTESS -> "👩‍⚕️ " + name;
+            case NURSE -> "👨‍⚕️ " + name;
+            case SUPERVISOR -> "👔 " + name;
+            case ADMIN -> "🛡️ " + name;
         };
     }
 
