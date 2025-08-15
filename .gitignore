@@ -51,6 +51,7 @@ diet-sheets/
 .env.prod
 .env.*.local
 .env.*.prod
+.env.production
 secrets_*.env
 secrets_*.txt
 .secrets
@@ -238,8 +239,13 @@ $RECYCLE.BIN/
 *.msp
 
 # Linux
-*~
 .fuse_hidden*
 .directory
 .Trash-*
 .nfs*
+
+# SSL certificates
+docker/nginx/ssl/*.crt
+docker/nginx/ssl/*.key
+docker/postgres/ssl/*.crt
+docker/postgres/ssl/*.key

@@ -1,58 +1,112 @@
 # docker-compose.prod.yml
+version: '3.8'
+
 services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: servicesync-postgres-prod
+    restart: unless-stopped
     env_file:
       - .env.prod
     environment:
-      # Use hardcoded values to avoid variable substitution issues
       POSTGRES_DB: servicesync_prod
       POSTGRES_USER: servicesync_prod
-      # POSTGRES_PASSWORD will be set from DB_PASSWORD in .env.prod via env_file
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --auth-host=scram-sha-256 --auth-local=peer"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/init-scripts:/docker-entrypoint-initdb.d
+      - ./docker/init-scripts:/docker-entrypoint-initdb.d:ro
+      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./docker/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./docker/postgres/ssl:/var/lib/postgresql/ssl:ro
     networks:
       - servicesync-network
-    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U servicesync_prod -d servicesync_prod"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: >
+      postgres 
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    labels:
+      - "com.servicesync.service=database"
+      - "com.servicesync.environment=production"
 
   # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: servicesync-redis-prod
+    restart: unless-stopped
     env_file:
       - .env.prod
-    # Redis will use REDIS_PASSWORD from env_file automatically
-    command: ["sh", "-c", "redis-server --requirepass $$REDIS_PASSWORD"]
+    command: >
+      sh -c "
+      redis-server 
+      --requirepass $$REDIS_PASSWORD 
+      --appendonly yes 
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 300
+      --timeout 300
+      "
     volumes:
       - redis_data:/data
     networks:
       - servicesync-network
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "sh", "-c", "redis-cli --no-auth-warning -a $$REDIS_PASSWORD ping"]
-      interval: 10s
-      timeout: 3s
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    labels:
+      - "com.servicesync.service=cache"
+      - "com.servicesync.environment=production"
 
   # Spring Boot Application
   app:
     build:
       context: .
       dockerfile: Dockerfile.prod
+      args:
+        - SPRING_PROFILES_ACTIVE=prod
+        - BUILD_DATE=${BUILD_DATE:-unknown}
+        - BUILD_VERSION=${BUILD_VERSION:-latest}
     container_name: servicesync-app-prod
+    restart: unless-stopped
     env_file:
       - .env.prod
     environment:
-      # Override or set specific values needed by the application
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: postgres
       DB_PORT: 5432
@@ -61,8 +115,22 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       TZ: Africa/Johannesburg
-      JAVA_OPTS: "-Xms512m -Xmx1g -XX:+UseG1GC"
-      # All other values (DB_PASSWORD, JWT_SECRET, etc.) come from .env.prod
+      JAVA_OPTS: >-
+        -Xms512m 
+        -Xmx1g 
+        -XX:+UseG1GC 
+        -XX:+UseContainerSupport 
+        -XX:MaxRAMPercentage=75.0 
+        -XX:+UseStringDeduplication
+        -XX:+ExitOnOutOfMemoryError
+        -Djava.security.egd=file:/dev/./urandom
+        -Dspring.jmx.enabled=true
+        -Dcom.sun.management.jmxremote
+        -Dcom.sun.management.jmxremote.authenticate=false
+        -Dcom.sun.management.jmxremote.ssl=false
+        -Dcom.sun.management.jmxremote.local.only=false
+        -Dcom.sun.management.jmxremote.port=1099
+        -Dcom.sun.management.jmxremote.rmi.port=1099
     depends_on:
       postgres:
         condition: service_healthy
@@ -73,40 +141,185 @@ services:
     volumes:
       - app_uploads:/var/servicesync/uploads
       - app_logs:/var/log/servicesync
-    restart: unless-stopped
+      - /tmp:/tmp:rw
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: >
+        CMD sh -c 'curl -f http://localhost:8080/actuator/health/readiness || exit 1'
       interval: 30s
-      timeout: 10s
+      timeout: 15s
       retries: 3
-      start_period: 60s
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.5'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    labels:
+      - "com.servicesync.service=application"
+      - "com.servicesync.environment=production"
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
 
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
-    container_name: servicesync-nginx
+    container_name: servicesync-nginx-prod
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./docker/nginx/snippets:/etc/nginx/snippets:ro
+      - nginx_cache:/var/cache/nginx
+      - nginx_logs:/var/log/nginx
     depends_on:
-      - app
+      app:
+        condition: service_healthy
     networks:
       - servicesync-network
+    healthcheck:
+      test: >
+        CMD sh -c 'wget --no-verbose --tries=1 --spider http://localhost/health || exit 1'
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+    labels:
+      - "com.servicesync.service=proxy"
+      - "com.servicesync.environment=production"
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/run:rw,noexec,nosuid,size=100m
+      - /var/cache/nginx:rw,noexec,nosuid,size=100m
+      - /tmp:rw,noexec,nosuid,size=100m
+
+  # Backup Service (Optional - runs periodically)
+  backup:
+    image: postgres:15-alpine
+    container_name: servicesync-backup
+    restart: "no"
+    env_file:
+      - .env.prod
+    environment:
+      PGPASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ./backups:/backups
+      - ./docker/scripts:/scripts:ro
+    networks:
+      - servicesync-network
+    depends_on:
+      - postgres
+    profiles:
+      - backup
+    entrypoint: ["/bin/sh"]
+    command: ["/scripts/backup.sh"]
+    labels:
+      - "com.servicesync.service=backup"
+      - "com.servicesync.environment=production"
+
+  # Log aggregator (Optional - for centralized logging)
+  log-aggregator:
+    image: fluent/fluent-bit:latest
+    container_name: servicesync-logs
     restart: unless-stopped
+    volumes:
+      - ./docker/fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - app_logs:/var/log/servicesync:ro
+      - nginx_logs:/var/log/nginx:ro
+    networks:
+      - servicesync-network
+    profiles:
+      - logging
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    labels:
+      - "com.servicesync.service=logging"
+      - "com.servicesync.environment=production"
 
 networks:
   servicesync-network:
     driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+    labels:
+      - "com.servicesync.network=main"
+      - "com.servicesync.environment=production"
 
 volumes:
   postgres_data:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/postgres
+    labels:
+      - "com.servicesync.volume=database"
   redis_data:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/redis
+    labels:
+      - "com.servicesync.volume=cache"
   app_uploads:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/uploads
+    labels:
+      - "com.servicesync.volume=uploads"
   app_logs:
     driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${DATA_DIR:-./data}/logs
+    labels:
+      - "com.servicesync.volume=logs"
+  nginx_cache:
+    driver: local
+    labels:
+      - "com.servicesync.volume=nginx-cache"
+  nginx_logs:
+    driver: local
+    labels:
+      - "com.servicesync.volume=nginx-logs"
