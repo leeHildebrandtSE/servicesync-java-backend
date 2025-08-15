@@ -3,6 +3,12 @@ spring:
   application:
     name: servicesync-api
 
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
   # Database Configuration
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:servicesync}
@@ -21,7 +27,7 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: ${DDL_AUTO:validate}
+      ddl-auto: none  # Let Flyway handle schema
     show-sql: ${SHOW_SQL:false}
     properties:
       hibernate:
@@ -278,7 +284,7 @@ spring:
 
   security:
     jwt:
-      secret: ${JWT_SECRET:} # Must be provided via environment variable
+      secret: ${JWT_SECRET} # Must be provided via environment variable
 
 logging:
   level:
