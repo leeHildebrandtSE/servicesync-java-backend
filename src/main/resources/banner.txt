@@ -1,0 +1,11 @@
+   ____                  _          ____
+  / ___|  ___ _ ____   _(_) ___ ___/ ___| _   _ _ __   ___
+  \___ \ / _ \ '__\ \ / / |/ __/ _ \___ \| | | | '_ \ / __|
+   ___) |  __/ |   \ V /| | (_|  __/___) | |_| | | | | (__
+  |____/ \___|_|    \_/ |_|\___\___|____/ \__, |_| |_|\___|
+                                          |___/
+
+    🏥 Digital Hospital Meal Delivery Tracking System 🏥
+
+ :: ServiceSync Backend :: Running on Spring Boot ${spring-boot.version}
+ :: Hospital Management :: Version ${application.version:1.0.0}
