@@ -43,16 +43,24 @@ logs/
 # Upload directories
 uploads/
 temp/
+diet-sheets/
 
-# Environment variables
+# Environment variables and secrets
 .env
 .env.local
+.env.prod
 .env.*.local
+.env.*.prod
+secrets_*.env
+secrets_*.txt
+.secrets
 
 # Docker volumes (if using local bind mounts)
 data/
 postgres-data/
 redis-data/
+nginx-data/
+backup-data/
 
 # Spring Boot specific
 spring.log
@@ -60,18 +68,53 @@ application-*.properties
 application-*.yml
 !application.yml
 !application.properties
+application-secrets.yml
 
-# Security files
+# Security files and secrets
 *.p12
 *.jks
 *.keystore
 *.pem
 *.key
 *.crt
+*.pfx
+*.cert
+ssl/
+certs/
+keys/
+secrets/
 
-# Test reports
+# JWT and authentication files
+jwt-*.key
+auth-*.secret
+token-*.key
+
+# Database dumps and backups
+*.dump
+*.sql.gz
+*.backup
+backup/
+db-backup/
+database-exports/
+
+# Configuration files with secrets
+config-prod.yml
+config-secrets.yml
+production-config.yml
+*-secrets.properties
+*-secrets.yml
+
+# Test reports and coverage
 test-results/
 coverage/
+jacoco/
+surefire-reports/
+failsafe-reports/
+
+# Performance and profiling
+*.hprof
+*.prof
+*.jfr
 
 # OS generated files
 .DS_Store
@@ -82,6 +125,7 @@ coverage/
 ehthumbs.db
 Thumbs.db
 desktop.ini
+Thumbs.db:encryptable
 
 # Temporary files
 *.tmp
@@ -89,24 +133,109 @@ desktop.ini
 *.swp
 *.swo
 *~
+.#*
 
-# IDE specific folders
+# IDE specific folders and files
 *.sublime-*
 .vscode/settings.json
 .vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+*.code-workspace
 
-# Docker specific (optional - uncomment if needed)
-# docker-compose.override.yml
-# .dockerignore
+# Docker specific
+docker-compose.override.yml
+docker-compose.local.yml
+docker-compose.secrets.yml
+.dockerignore.local
+docker-data/
 
 # Database files (if using embedded databases for testing)
 *.db
 *.sqlite
 *.h2.db
+*.mv.db
+*.trace.db
 
 # Maven/Gradle wrapper (keep the scripts but ignore properties)
 .mvn/wrapper/maven-wrapper.properties
 gradle/wrapper/gradle-wrapper.properties
 
-# Application specific
-application-secrets.yml
+# Kubernetes and deployment
+k8s-secrets.yml
+deployment-secrets.yml
+*.k8s.yml
+kustomization.yml
+
+# Monitoring and metrics
+metrics/
+prometheus/
+grafana/
+
+# Documentation generated files
+docs/_build/
+docs/api/
+
+# Cache directories
+.cache/
+node_modules/
+.npm/
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Virtual machine crash logs
+hs_err_pid*
+replay_pid*
+
+# Application specific secrets and configs
+application-local.yml
+application-dev-local.yml
+application-prod-local.yml
+
+# Generated migration files with variables
+*_with_vars.sql
+migration_*.sql
+
+# API keys and tokens
+api-keys.txt
+tokens.txt
+credentials.json
+
+# Local development overrides
+local-config/
+dev-override/
+
+# Ignore but keep directories structure
+uploads/.gitkeep
+logs/.gitkeep
+temp/.gitkeep
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
