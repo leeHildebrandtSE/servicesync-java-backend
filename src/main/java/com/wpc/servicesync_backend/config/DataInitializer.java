@@ -40,6 +40,7 @@ public class DataInitializer implements CommandLineRunner {
                 .address("123 Hospital St, Cape Town")
                 .contactEmail("admin@wpcgh.co.za")
                 .contactPhone("+27 21 123 4567")
+                .isActive(true)
                 .build();
         hospital1 = hospitalRepository.save(hospital1);
 
@@ -49,6 +50,7 @@ public class DataInitializer implements CommandLineRunner {
                 .address("456 Medical Ave, Cape Town")
                 .contactEmail("admin@wpcmh.co.za")
                 .contactPhone("+27 21 234 5678")
+                .isActive(true)
                 .build();
         hospital2 = hospitalRepository.save(hospital2);
 
@@ -58,6 +60,7 @@ public class DataInitializer implements CommandLineRunner {
                 .name("3A - General Medicine")
                 .floorNumber(3)
                 .capacity(25)
+                .isActive(true)
                 .build();
         wardRepository.save(ward1);
 
@@ -66,6 +69,7 @@ public class DataInitializer implements CommandLineRunner {
                 .name("3B - General Medicine")
                 .floorNumber(3)
                 .capacity(30)
+                .isActive(true)
                 .build();
         wardRepository.save(ward2);
 
@@ -74,6 +78,7 @@ public class DataInitializer implements CommandLineRunner {
                 .name("4A - Surgery")
                 .floorNumber(4)
                 .capacity(20)
+                .isActive(true)
                 .build();
         wardRepository.save(ward3);
 
@@ -86,6 +91,7 @@ public class DataInitializer implements CommandLineRunner {
                 .role(EmployeeRole.HOSTESS)
                 .hospital(hospital1)
                 .shiftSchedule("3A,3B,4A") // Simple ward assignments
+                .isActive(true)
                 .build();
         employeeRepository.save(hostess);
 
@@ -97,6 +103,7 @@ public class DataInitializer implements CommandLineRunner {
                 .role(EmployeeRole.NURSE)
                 .hospital(hospital1)
                 .shiftSchedule("3A")
+                .isActive(true)
                 .build();
         employeeRepository.save(nurse);
 
@@ -108,6 +115,7 @@ public class DataInitializer implements CommandLineRunner {
                 .role(EmployeeRole.SUPERVISOR)
                 .hospital(hospital1)
                 .shiftSchedule("ALL")
+                .isActive(true)
                 .build();
         employeeRepository.save(supervisor);
 
@@ -119,6 +127,7 @@ public class DataInitializer implements CommandLineRunner {
                 .role(EmployeeRole.ADMIN)
                 .hospital(hospital1)
                 .shiftSchedule("ALL")
+                .isActive(true)
                 .build();
         employeeRepository.save(admin);
 
