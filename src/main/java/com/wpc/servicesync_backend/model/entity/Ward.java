@@ -70,7 +70,10 @@ public class Ward {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    // Fixed: Replace Java 21 string template with String.format()
     public String getDisplayName() {
-        return STR."\{name} (Floor \{floorNumber != null ? floorNumber : "N/A"})";
+        return String.format("%s (Floor %s)",
+                name,
+                floorNumber != null ? floorNumber.toString() : "N/A");
     }
 }
