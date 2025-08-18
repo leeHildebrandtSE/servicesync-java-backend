@@ -217,6 +217,11 @@ spring:
     activate:
       on-profile: dev
 
+  # Disable automatic Docker Compose integration
+#  docker:
+#    compose:
+#      enabled: false
+
   datasource:
     url: jdbc:postgresql://localhost:5432/servicesync
     username: servicesync

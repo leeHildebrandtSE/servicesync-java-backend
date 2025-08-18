@@ -94,7 +94,7 @@ Access:
 ./scripts/deploy.sh stop
 
 # Restore from backup
-docker run --rm -v servicesync_postgres_data:/data -v $(pwd)/backups:/backup postgres:15-alpine \
+docker run --rm -v servicesync_postgres_data:/data -v $(pwd)/backups:/backup postgres:16-alpine \
   bash -c "cd /data && gunzip -c /backup/servicesync_backup_YYYYMMDD_HHMMSS.sql.gz | psql -U servicesync_prod -d servicesync_prod"
 
 # Start application
