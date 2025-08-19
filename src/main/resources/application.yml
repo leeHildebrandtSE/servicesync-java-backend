@@ -1,316 +1,37 @@
-# src/main/resources/application.yml
+# Base configuration - common settings for all environments
 spring:
   application:
     name: servicesync-api
 
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    validate-on-migrate: true
+  profiles:
+    active: local
 
-  # Database Configuration
-  datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:servicesync}
-    username: ${DB_USERNAME:servicesync}
-    password: ${DB_PASSWORD:servicesync123}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:20}
-      minimum-idle: ${HIKARI_MIN_IDLE:5}
-      connection-timeout: 20000
-      idle-timeout: 300000
-      max-lifetime: 1200000
-      pool-name: ServiceSyncHikariCP
-      leak-detection-threshold: 60000
-
-  # JPA Configuration
+  # JPA Configuration (common)
   jpa:
-    hibernate:
-      ddl-auto: none  # Let Flyway handle schema
-    show-sql: ${SHOW_SQL:false}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        jdbc:
-          time_zone: ${DB_TIMEZONE:UTC}
         format_sql: true
         use_sql_comments: true
-        cache:
-          use_second_level_cache: true
-          region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
-
-  # Redis Configuration
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      timeout: 2000ms
-      database: ${REDIS_DATABASE:0}
-      jedis:
-        pool:
-          max-active: ${REDIS_MAX_CONNECTIONS:20}
-          max-idle: 10
-          min-idle: 5
-          max-wait: -1ms
-
-  # Security Configuration
-  security:
-    jwt:
-      secret: ${JWT_SECRET:}  # Must be provided via environment variable
-      expiration: ${JWT_EXPIRATION:86400000} # 24 hours
-      refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 days
+        jdbc:
+          time_zone: UTC
 
   # File Upload Configuration
   servlet:
     multipart:
-      max-file-size: ${MAX_FILE_SIZE:10MB}
-      max-request-size: ${MAX_REQUEST_SIZE:50MB}
-      location: ${UPLOAD_TEMP_DIR:./temp}
+      max-file-size: 10MB
+      max-request-size: 50MB
 
-  # Profile Configuration
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
-
+# Server Configuration
 server:
-  port: ${SERVER_PORT:8080}
-  servlet:
-    context-path: ${CONTEXT_PATH:}
+  port: 8080
   compression:
     enabled: true
-    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
-    min-response-size: 1024
+    mime-types: text/html,text/xml,text/plain,text/css,application/json
   error:
     include-message: always
     include-binding-errors: always
-    include-stacktrace: on_param
-    include-exception: false
 
 # Management and Monitoring
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics,prometheus
-      cors:
-        allowed-origins: ${MANAGEMENT_CORS_ORIGINS:http://localhost:3000}
-        allowed-methods: GET,POST
-  endpoint:
-    health:
-      show-details: when-authorized
-      show-components: always
-      roles: ADMIN,SUPERVISOR
-    info:
-      enabled: true
-  health:
-    diskspace:
-      enabled: true
-    db:
-      enabled: true
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-  info:
-    env:
-      enabled: true
-    java:
-      enabled: true
-    os:
-      enabled: true
-
-# Logging Configuration
-logging:
-  level:
-    com.wpc.servicesync_backend: ${LOG_LEVEL:INFO}
-    org.springframework.security: WARN
-    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
-    org.hibernate.type.descriptor.sql.BasicBinder: WARN
-    org.springframework.web: ${WEB_LOG_LEVEL:INFO}
-    org.springframework.cache: WARN
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: ${LOG_FILE:./logs/servicesync.log}
-    max-size: ${LOG_FILE_MAX_SIZE:10MB}
-    max-history: ${LOG_FILE_MAX_HISTORY:30}
-
-# Custom Application Properties
-app:
-  name: ServiceSync
-  version: "@project.version@"
-  description: Digital hospital meal delivery tracking system
-  timezone: ${APP_TIMEZONE:Africa/Johannesburg}
-
-  # CORS Configuration
-  cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
-    allowed-methods: ${CORS_ALLOWED_METHODS:GET,POST,PUT,DELETE,OPTIONS}
-    allowed-headers: ${CORS_ALLOWED_HEADERS:*}
-    allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
-
-  # Feature Flags
-  features:
-    ml-optimization: ${ENABLE_ML:false}
-    iot-integration: ${ENABLE_IOT:false}
-    advanced-analytics: ${ENABLE_ANALYTICS:true}
-    real-time-notifications: ${ENABLE_NOTIFICATIONS:true}
-    file-upload: ${ENABLE_FILE_UPLOAD:true}
-
-  # File Storage Configuration
-  storage:
-    type: ${STORAGE_TYPE:local} # local, s3, azure
-    local:
-      upload-dir: ${UPLOAD_DIR:./uploads}
-      diet-sheet-dir: ${DIET_SHEET_DIR:./uploads/diet-sheets}
-      max-file-size: ${MAX_DIET_SHEET_SIZE:5MB}
-    s3:
-      bucket: ${S3_BUCKET:}
-      region: ${S3_REGION:us-east-1}
-      access-key: ${S3_ACCESS_KEY:}
-      secret-key: ${S3_SECRET_KEY:}
-
-  # Email Configuration (for notifications)
-  email:
-    enabled: ${EMAIL_ENABLED:false}
-    smtp:
-      host: ${SMTP_HOST:smtp.gmail.com}
-      port: ${SMTP_PORT:587}
-      username: ${SMTP_USERNAME:}
-      password: ${SMTP_PASSWORD:}
-      auth: true
-      starttls: true
-    from: ${EMAIL_FROM:noreply@servicesync.co.za}
-
-  # Business Rules Configuration
-  business:
-    session:
-      auto-complete-hours: ${AUTO_COMPLETE_HOURS:24}
-      max-meal-count: ${MAX_MEAL_COUNT:100}
-      min-meal-count: ${MIN_MEAL_COUNT:1}
-    performance:
-      target-serving-rate: ${TARGET_SERVING_RATE:0.6} # meals per minute
-      max-travel-time-minutes: ${MAX_TRAVEL_TIME:15}
-      max-nurse-response-minutes: ${MAX_NURSE_RESPONSE:5}
-    alerts:
-      travel-time-threshold: ${TRAVEL_TIME_THRESHOLD:900} # seconds (15 min)
-      nurse-response-threshold: ${NURSE_RESPONSE_THRESHOLD:300} # seconds (5 min)
-      completion-rate-threshold: ${COMPLETION_RATE_THRESHOLD:75} # percentage
-
-  # Security Configuration
-  security:
-    password:
-      min-length: ${PASSWORD_MIN_LENGTH:8}
-      require-special-chars: ${PASSWORD_REQUIRE_SPECIAL:true}
-    session:
-      timeout-minutes: ${SESSION_TIMEOUT:30}
-    rate-limit:
-      enabled: ${RATE_LIMIT_ENABLED:true}
-      requests-per-minute: ${RATE_LIMIT_RPM:60}
-
----
-# Development Profile
-spring:
-  config:
-    activate:
-      on-profile: dev
-
-  # Disable automatic Docker Compose integration
-#  docker:
-#    compose:
-#      enabled: false
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/servicesync
-    username: servicesync
-    password: servicesync123
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    show-sql: true
-    hibernate:
-      ddl-auto: update
-
-  security:
-    jwt:
-      secret: ${JWT_SECRET:ZGV2ZWxvcG1lbnQtand0LXNlY3JldC1rZXktZm9yLXRlc3Rpbmctb25seS1ub3QtZm9yLXByb2R1Y3Rpb24tdXNl}
-
-logging:
-  level:
-    com.wpc.servicesync_backend: DEBUG
-    org.springframework.web: DEBUG
-    org.hibernate.SQL: DEBUG
-
-app:
-  features:
-    advanced-analytics: true
-    real-time-notifications: true
-  cors:
-    allowed-origins: "http://localhost:3000,http://localhost:8080,http://localhost:3001"
-
----
-# Docker Profile
-spring:
-  config:
-    activate:
-      on-profile: docker
-
-  datasource:
-    url: jdbc:postgresql://postgres:5432/servicesync
-
-  data:
-    redis:
-      host: redis
-
-  security:
-    jwt:
-      secret: ${JWT_SECRET:ZG9ja2VyLWp3dC1zZWNyZXQta2V5LWZvci1kZXZlbG9wbWVudC11c2Utb25seQ==}
-
-logging:
-  level:
-    com.wpc.servicesync_backend: INFO
-
-app:
-  cors:
-    allowed-origins: "http://localhost:3000,http://host.docker.internal:3000"
-
----
-# Production Profile
-spring:
-  config:
-    activate:
-      on-profile: prod
-
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-
-  datasource:
-    hikari:
-      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:50}
-      minimum-idle: ${HIKARI_MIN_IDLE:10}
-
-  security:
-    jwt:
-      secret: ${JWT_SECRET} # Must be provided via environment variable
-
-logging:
-  level:
-    com.wpc.servicesync_backend: WARN
-    org.springframework.web: WARN
-    org.hibernate.SQL: ERROR
-  file:
-    name: /var/log/servicesync/servicesync.log
-
-server:
-  compression:
-    enabled: true
-  http2:
-    enabled: true
-
 management:
   endpoints:
     web:
@@ -318,12 +39,41 @@ management:
         include: health,info,metrics
   endpoint:
     health:
-      show-details: never
-
-app:
-  cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://servicesync.co.za,https://app.servicesync.co.za}
-  security:
-    rate-limit:
+      show-details: when-authorized
+  health:
+    diskspace:
       enabled: true
-      requests-per-minute: 30
+    db:
+      enabled: true
+
+# Custom Application Properties
+app:
+  name: ServiceSync
+  version: "@project.version@"
+  description: Digital hospital meal delivery tracking system
+  timezone: Africa/Johannesburg
+
+  # Feature Flags (can be overridden per environment)
+  features:
+    advanced-analytics: true
+    real-time-notifications: true
+    file-upload: true
+
+  # File Storage Configuration
+  storage:
+    local:
+      upload-dir: ./uploads
+      diet-sheet-dir: ./uploads/diet-sheets
+      max-file-size: 5MB
+
+  # Business Rules Configuration
+  business:
+    session:
+      auto-complete-hours: 24
+      max-meal-count: 100
+    performance:
+      target-serving-rate: 0.6
+    alerts:
+      travel-time-threshold: 900
+      nurse-response-threshold: 300
+      completion-rate-threshold: 75
