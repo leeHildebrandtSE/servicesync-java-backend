@@ -24,8 +24,8 @@ public class ServicesyncBackendApplication {
             - OpenAPI Documentation
             - Scheduled Tasks
             
-            Documentation: http://localhost:8080/swagger-ui.html
-            Health Check: http://localhost:8080/actuator/health
+            Documentation: http://localhost:8081/swagger-ui/index.html
+            Health Check: http://localhost:8081/actuator/health
             """);
     }
 }

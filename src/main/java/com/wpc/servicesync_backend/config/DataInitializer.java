@@ -1,141 +1,143 @@
+// DataInitializer.java - Fixed version with proper JSON formatting
+
 package com.wpc.servicesync_backend.config;
 
-import com.wpc.servicesync_backend.model.entity.Employee;
-import com.wpc.servicesync_backend.model.entity.EmployeeRole;
-import com.wpc.servicesync_backend.model.entity.Hospital;
-import com.wpc.servicesync_backend.model.entity.Ward;
-import com.wpc.servicesync_backend.repository.EmployeeRepository;
-import com.wpc.servicesync_backend.repository.HospitalRepository;
-import com.wpc.servicesync_backend.repository.WardRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.wpc.servicesync_backend.model.entity.*;
+import com.wpc.servicesync_backend.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-@Slf4j
 @Component
-@RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private final HospitalRepository hospitalRepository;
-    private final WardRepository wardRepository;
-    private final EmployeeRepository employeeRepository;
-    private final PasswordEncoder passwordEncoder;
+    private static final Logger logger = LoggerFactory.getLogger(DataInitializer.class);
+
+    @Autowired
+    private HospitalRepository hospitalRepository;
+
+    @Autowired
+    private WardRepository wardRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
-    public void run(String... args) {
+    public void run(String... args) throws Exception {
+        // Only initialize data if no hospitals exist
         if (hospitalRepository.count() == 0) {
+            logger.info("Initializing sample data...");
             initializeData();
         }
     }
 
     private void initializeData() {
-        log.info("Initializing sample data...");
+        // Create Hospitals
+        Hospital hospital1 = new Hospital();
+        hospital1.setCode("CTH001");
+        hospital1.setName("Cape Town General Hospital");
+        hospital1.setAddress("Anzio Road, Observatory, Cape Town, 7925");
+        hospital1.setContactEmail("info@ctgh.co.za");
+        hospital1.setContactPhone("+27-21-404-2911");
+        hospital1.setIsActive(true);
 
-        // Create hospitals
-        Hospital hospital1 = Hospital.builder()
-                .code("WPC_GH")
-                .name("Western Province General Hospital")
-                .address("123 Hospital St, Cape Town")
-                .contactEmail("admin@wpcgh.co.za")
-                .contactPhone("+27 21 123 4567")
-                .isActive(true)
-                .build();
-        hospital1 = hospitalRepository.save(hospital1);
+        Hospital hospital2 = new Hospital();
+        hospital2.setCode("GSH002");
+        hospital2.setName("Groote Schuur Hospital");
+        hospital2.setAddress("Main Road, Observatory, Cape Town, 7925");
+        hospital2.setContactEmail("contact@gsh.co.za");
+        hospital2.setContactPhone("+27-21-404-9111");
+        hospital2.setIsActive(true);
 
-        Hospital hospital2 = Hospital.builder()
-                .code("WPC_MH")
-                .name("Western Province Maternity Hospital")
-                .address("456 Medical Ave, Cape Town")
-                .contactEmail("admin@wpcmh.co.za")
-                .contactPhone("+27 21 234 5678")
-                .isActive(true)
-                .build();
-        hospital2 = hospitalRepository.save(hospital2);
+        hospitalRepository.save(hospital1);
+        hospitalRepository.save(hospital2);
 
-        // Create wards
-        Ward ward1 = Ward.builder()
-                .hospital(hospital1)
-                .name("3A - General Medicine")
-                .floorNumber(3)
-                .capacity(25)
-                .isActive(true)
-                .build();
+        // Create Wards
+        Ward ward1 = new Ward();
+        ward1.setName("ICU");
+        ward1.setFloorNumber(3);
+        ward1.setCapacity(20);
+        ward1.setHospital(hospital1);
+        ward1.setIsActive(true);
+
+        Ward ward2 = new Ward();
+        ward2.setName("General Medicine");
+        ward2.setFloorNumber(2);
+        ward2.setCapacity(40);
+        ward2.setHospital(hospital1);
+        ward2.setIsActive(true);
+
+        Ward ward3 = new Ward();
+        ward3.setName("Pediatrics");
+        ward3.setFloorNumber(1);
+        ward3.setCapacity(30);
+        ward3.setHospital(hospital2);
+        ward3.setIsActive(true);
+
         wardRepository.save(ward1);
-
-        Ward ward2 = Ward.builder()
-                .hospital(hospital1)
-                .name("3B - General Medicine")
-                .floorNumber(3)
-                .capacity(30)
-                .isActive(true)
-                .build();
         wardRepository.save(ward2);
-
-        Ward ward3 = Ward.builder()
-                .hospital(hospital1)
-                .name("4A - Surgery")
-                .floorNumber(4)
-                .capacity(20)
-                .isActive(true)
-                .build();
         wardRepository.save(ward3);
 
-        // Create employees
-        Employee hostess = Employee.builder()
-                .employeeId("H001")
-                .name("Sarah Johnson")
-                .email("sarah.johnson@wpcgh.co.za")
-                .passwordHash(passwordEncoder.encode("password123"))
-                .role(EmployeeRole.HOSTESS)
-                .hospital(hospital1)
-                .shiftSchedule("3A,3B,4A") // Simple ward assignments
-                .isActive(true)
-                .build();
-        employeeRepository.save(hostess);
-
-        Employee nurse = Employee.builder()
-                .employeeId("N001")
-                .name("Mary Williams")
-                .email("mary.williams@wpcgh.co.za")
-                .passwordHash(passwordEncoder.encode("password123"))
-                .role(EmployeeRole.NURSE)
-                .hospital(hospital1)
-                .shiftSchedule("3A")
-                .isActive(true)
-                .build();
-        employeeRepository.save(nurse);
-
-        Employee supervisor = Employee.builder()
-                .employeeId("S001")
-                .name("David Smith")
-                .email("david.smith@wpcgh.co.za")
-                .passwordHash(passwordEncoder.encode("password123"))
-                .role(EmployeeRole.SUPERVISOR)
-                .hospital(hospital1)
-                .shiftSchedule("ALL")
-                .isActive(true)
-                .build();
-        employeeRepository.save(supervisor);
-
+        // Create Employees with proper JSON formatting 👨‍⚕️👩‍⚕️
         Employee admin = Employee.builder()
-                .employeeId("A001")
-                .name("Administrator")
-                .email("admin@wpcgh.co.za")
+                .employeeId("ADM001")
+                .name("Sarah Johnson")
+                .email("sarah.johnson@ctgh.co.za")
                 .passwordHash(passwordEncoder.encode("admin123"))
                 .role(EmployeeRole.ADMIN)
                 .hospital(hospital1)
-                .shiftSchedule("ALL")
                 .isActive(true)
+                .shiftSchedule("{\"monday\": \"08:00-17:00\", \"tuesday\": \"08:00-17:00\", \"wednesday\": \"08:00-17:00\", \"thursday\": \"08:00-17:00\", \"friday\": \"08:00-17:00\"}")
                 .build();
-        employeeRepository.save(admin);
 
-        log.info("Sample data initialized successfully!");
-        log.info("Test credentials:");
-        log.info("Hostess: H001 / password123");
-        log.info("Nurse: N001 / password123");
-        log.info("Supervisor: S001 / password123");
-        log.info("Admin: A001 / admin123");
+        Employee hostess = Employee.builder()
+                .employeeId("HOST001")
+                .name("Maria Gonzalez")
+                .email("maria.gonzalez@ctgh.co.za")
+                .passwordHash(passwordEncoder.encode("hostess123"))
+                .role(EmployeeRole.HOSTESS)
+                .hospital(hospital1)
+                .isActive(true)
+                .shiftSchedule("{\"monday\": \"06:00-14:00\", \"tuesday\": \"06:00-14:00\", \"wednesday\": \"06:00-14:00\", \"thursday\": \"06:00-14:00\", \"friday\": \"06:00-14:00\"}")
+                .build();
+
+        Employee nurse = Employee.builder()
+                .employeeId("NUR001")
+                .name("John Smith")
+                .email("john.smith@ctgh.co.za")
+                .passwordHash(passwordEncoder.encode("nurse123"))
+                .role(EmployeeRole.NURSE)
+                .hospital(hospital1)
+                .isActive(true)
+                .shiftSchedule("{\"monday\": \"07:00-19:00\", \"wednesday\": \"07:00-19:00\", \"friday\": \"07:00-19:00\", \"sunday\": \"07:00-19:00\"}")
+                .build();
+
+        Employee supervisor = Employee.builder()
+                .employeeId("SUP001")
+                .name("Lisa Williams")
+                .email("lisa.williams@gsh.co.za")
+                .passwordHash(passwordEncoder.encode("supervisor123"))
+                .role(EmployeeRole.SUPERVISOR)
+                .hospital(hospital2)
+                .isActive(true)
+                .shiftSchedule("{\"monday\": \"09:00-18:00\", \"tuesday\": \"09:00-18:00\", \"wednesday\": \"09:00-18:00\", \"thursday\": \"09:00-18:00\"}")
+                .build();
+
+        employeeRepository.save(admin);
+        employeeRepository.save(hostess);
+        employeeRepository.save(nurse);
+        employeeRepository.save(supervisor);
+
+        logger.info("Sample data initialization completed successfully!");
+        logger.info("Created {} hospitals, {} wards, and {} employees",
+                hospitalRepository.count(),
+                wardRepository.count(),
+                employeeRepository.count());
     }
 }

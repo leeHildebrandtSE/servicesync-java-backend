@@ -1,112 +1,154 @@
+// Employee.java - Fixed version with proper JSONB handling 👨‍⚕️👩‍⚕️
+
 package com.wpc.servicesync_backend.model.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "employees",
-        indexes = {
-                @Index(name = "idx_employee_id", columnList = "employee_id"),
-                @Index(name = "idx_hospital_id", columnList = "hospital_id"),
-                @Index(name = "idx_email", columnList = "email")
-        })
-@EntityListeners(AuditingEntityListener.class)
+@Table(name = "employees")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Employee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private UUID id; // 🆔 Unique identifier
 
     @Column(name = "employee_id", unique = true, nullable = false, length = 50)
-    @NotBlank(message = "Employee ID is required")
-    @Size(max = 50, message = "Employee ID must not exceed 50 characters")
-    private String employeeId;
+    private String employeeId; // 🏷️ Employee badge number
 
-    @Column(nullable = false, length = 255)
-    @NotBlank(message = "Name is required")
-    @Size(max = 255, message = "Name must not exceed 255 characters")
-    private String name;
+    @Column(name = "name", nullable = false)
+    private String name; // 👤 Full name
 
-    @Column(unique = true, length = 255)
-    @Email(message = "Email must be valid")
-    @Size(max = 255, message = "Email must not exceed 255 characters")
-    private String email;
+    @Column(name = "email", unique = true)
+    private String email; // 📧 Contact email
+
+    @JsonIgnore
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash; // 🔐 Secure password hash
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    @NotNull(message = "Role is required")
-    private EmployeeRole role;
+    @Column(name = "role", nullable = false, length = 50)
+    private EmployeeRole role; // 👔 Job position
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hospital_id", nullable = false)
-    @NotNull(message = "Hospital is required")
-    private Hospital hospital;
-
-    @Column(name = "password_hash", nullable = false)
-    @NotBlank(message = "Password is required")
-    private String passwordHash;
-
-    @Column(name = "shift_schedule", columnDefinition = "jsonb")
-    private String shiftSchedule;
+    private Hospital hospital; // 🏥 Workplace
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private Boolean isActive = true;
+    private Boolean isActive = true; // ✅ Employment status
 
     @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    private LocalDateTime lastLogin; // ⏰ Last system access
 
-    @CreatedDate
+    // OPTION 1: Use JdbcTypeCode for JSON handling (Recommended) 📅
+    @Column(name = "shift_schedule", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
+    private String shiftSchedule; // 🗓️ Work schedule in JSON format
+
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt; // 📅 Record creation time
 
-    @LastModifiedDate
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt; // 🔄 Last update time
 
-    // Fixed: Java 21 Pattern matching with standard string concatenation
+    // Business Methods 🏥
+
+    /**
+     * Get display name with role emoji for UI purposes 🏷️
+     */
     public String getDisplayName() {
-        return switch (role) {
-            case HOSTESS -> "👩‍⚕️ " + name;
-            case NURSE -> "👨‍⚕️ " + name;
-            case SUPERVISOR -> "👔 " + name;
-            case ADMIN -> "🛡️ " + name;
-        };
+        String emoji = getRoleEmoji();
+        return emoji + " " + name;
     }
 
-    public boolean canAccessWard(String wardId) {
-        return switch (role) {
-            case ADMIN, SUPERVISOR -> true;
-            case HOSTESS, NURSE -> {
-                // Check if assigned to this ward
-                yield shiftSchedule != null && shiftSchedule.contains(wardId);
+    /**
+     * Get emoji based on employee role 🎭
+     */
+    private String getRoleEmoji() {
+        if (role == null) return "👤";
+
+        switch (role) {
+            case HOSTESS:
+                return "👩‍⚕️";
+            case NURSE:
+                return "👨‍⚕️";
+            case SUPERVISOR:
+                return "👔";
+            case ADMIN:
+                return "🛡️";
+            default:
+                return "👤";
+        }
+    }
+
+    /**
+     * Check if employee can access a specific ward 🚪
+     * Admin and Supervisor have full access
+     * Nurses and Hostesses can only access wards in their shift schedule
+     */
+    public boolean canAccessWard(String wardName) {
+        if (wardName == null || wardName.trim().isEmpty()) {
+            return false;
+        }
+
+        // Role-based access control
+        switch (role) {
+            case ADMIN:
+            case SUPERVISOR:
+                return true; // 🔑 Full access
+
+            case NURSE:
+            case HOSTESS:
+                return canAccessAssignedWard(wardName); // 📅 Schedule-based access
+
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if ward is in employee's assigned schedule 📋
+     */
+    private boolean canAccessAssignedWard(String wardName) {
+        if (shiftSchedule == null || shiftSchedule.trim().isEmpty()) {
+            return false;
+        }
+
+        // Handle both JSON format and simple comma-separated format
+        String schedule = shiftSchedule.toLowerCase();
+        String ward = wardName.toLowerCase();
+
+        // If it's JSON format, extract ward names
+        if (schedule.startsWith("{")) {
+            return schedule.contains(ward);
+        }
+
+        // Simple comma-separated format: "3A,3B,4A"
+        String[] assignedWards = schedule.split(",");
+        for (String assignedWard : assignedWards) {
+            if (assignedWard.trim().toLowerCase().equals(ward)) {
+                return true;
             }
-        };
+        }
+
+        return false;
     }
 }
